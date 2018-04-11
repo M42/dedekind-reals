@@ -4,7 +4,8 @@ Standalone positive Dedekind reals in Agda, as a completion of the
 dyadic rationals, using higher-inductive types (Dan Licata's trick) to
 define propositional truncation.
 
-This is work in progress and it is just meant as an exercise. It uses
+This is work in progress and it is just meant as an exercise. I do not plan
+to work on this for a while. It uses
 `--type-in-type` (in a way that could break soundness) to avoid the type
 of the real numbers residing in a higher universe; and many proofs are
 incomplete.  In any case, compiling `Reals.agda` creates
