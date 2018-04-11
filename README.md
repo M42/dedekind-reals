@@ -5,7 +5,7 @@ dyadic rationals, using higher-inductive types (Dan Licata's trick) to
 define propositional truncation.
 
 This is work in progress and it is just meant as an exercise. It uses
-`--type-in-type` (in a way that can break soundness) to avoid the type
+`--type-in-type` (in a way that could break soundness) to avoid the type
 of the real numbers residing in a higher universe; and many proofs are
 incomplete.  In any case, compiling `Reals.agda` creates
 an executable that successfully computes the first digits of the binary
