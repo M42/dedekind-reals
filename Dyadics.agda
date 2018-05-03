@@ -1,9 +1,8 @@
+{-# OPTIONS --without-K #-}
+
 module Dyadics where
 
 open import Naturals
-
-postulate
-  ADMITTED : {A : Set} → A
 
 
 normalized : ℕ → ℕ → Bool
@@ -164,30 +163,34 @@ zer = mkd 0 0
 oned : D
 oned = mkd 1 0
 
+twod : D
+twod = mkd 2 0
+
 half : D
 half = mkd 1 1
 
-add : D → D → D
-add (dyadic n e x) (dyadic n' e' x') = mkd (n * exp2 e' + n' * exp2 e) (e + e')
+_+d_ : D → D → D
+(_+d_) (dyadic n e x) (dyadic n' e' x') = mkd (n * exp2 e' + n' * exp2 e) (e + e')
 
-add' : D → D → D
-add' a b = mkd (n * exp2 e' + n' * exp2 e) (e + e')
+_+d'_ : D → D → D
+(_+d'_) a b = mkd (n * exp2 e' + n' * exp2 e) (e + e')
   where
     n = num$ a
     e = pow$ a
     n' = num$ b
     e' = pow$ b
 
-mult : D → D → D
-mult (dyadic n e x) (dyadic n' e' x') = mkd (n * n') (e + e')
+_*d_ : D → D → D
+(_*d_) (dyadic n e x) (dyadic n' e' x') = mkd (n * n') (e + e')
 
-add-numden : (a b : D) → add a b ≡ mkd (num$ a * exp2 (pow$ b) + num$ b * exp2 (pow$ a)) (pow$ a + pow$ b)
+add-numden : (a b : D) → (_+d_) a b ≡ mkd (num$ a * exp2 (pow$ b) + num$ b * exp2 (pow$ a)) (pow$ a + pow$ b)
 add-numden (dyadic n e x) (dyadic n₁ e₁ x₁) = refl
 
-mult-numden : (a b : D) → mult a b ≡ mkd (num$ a * num$ b) (pow$ a + pow$ b)
+mult-numden : (a b : D) → (_*d_) a b ≡ mkd (num$ a * num$ b) (pow$ a + pow$ b)
 mult-numden (dyadic n e x) (dyadic n₁ e₁ x₁) = refl
 
-mk-const : ∀ n e → Σ ℕ (λ k → (iszero k ≡ false) × ((n ≡ k * num$ (mkd n e)) × (exp2 e ≡ k * exp2 (pow$ (mkd n e)))))
+mk-const : ∀ n e →
+  Σ ℕ (λ k → (iszero k ≡ false) × ((n ≡ k * num$ (mkd n e)) × (exp2 e ≡ k * exp2 (pow$ (mkd n e)))))
 mk-const n zero = 1 , (refl , ((inv (+rzero n)) , refl))
 mk-const n (succ e) with (odd n)??
 mk-const n (succ e) | inl x = 1 , (refl , ((inv (+rzero n)) , (inv (+rzero (exp2 e + exp2 e)))))
@@ -217,7 +220,7 @@ mk-const n (succ e) | inr x | m , α | k' , (β1 , (β2 , β3)) = 2 * k' , (lemm
       = refl
 
 
-add-mk : ∀ n e n' e' → add (mkd n e) (mkd n' e') ≡ mkd (n * exp2 e' + n' * exp2 e) (e + e')
+add-mk : ∀ n e n' e' → (_+d_) (mkd n e) (mkd n' e') ≡ mkd (n * exp2 e' + n' * exp2 e) (e + e')
 add-mk n e n' e' with (mk-const n e) | (mk-const n' e')
 add-mk n e n' e' | k , (α1 , (α2 , α3)) | k' , (α1' , (α2' , α3')) rewrite
   add-numden (mkd n e) (mkd n' e') =
@@ -234,16 +237,47 @@ add-mk n e n' e' | k , (α1 , (α2 , α3)) | k' , (α1' , (α2' , α3')) rewrite
           → exp2 e' ≡ k' * exp2 f'
           → k' * (k * ((m * exp2 f' + m' * exp2 f) * exp2 (e + e'))) ≡
             k' * (k * ((n * exp2 e' + n' * exp2 e) * exp2 (f + f')))
-        lemma2 n e n' e' m f m' f' = ADMITTED
+        lemma2 k k' n e n' e' m f m' f' u v w x
+          rewrite
+          *assoc k (m * exp2 f' + m' * exp2 f) (exp2 (e + e'))
+          | *distr k (m * exp2 f') (m' * exp2 f)
+          | *assoc k m (exp2 f')
+          | inv u
+          | *comm m' (exp2 f)
+          | *assoc k (exp2 f) m'
+          | inv w
+          | *assoc k' (n * exp2 f' + exp2 e * m') (exp2 (e + e'))
+          | *distr k' (n * exp2 f') (exp2 e * m')
+          | *comm n (exp2 f')
+          | *assoc k' (exp2 f') n
+          | inv x
+          | *comm (exp2 e) m'
+          | *assoc k' m' (exp2 e)
+          | inv v
+          | *comm (exp2 e') n
+          | *assoc k (n * exp2 e' + n' * exp2 e) (exp2 (f + f'))
+          | *comm k (n * exp2 e' + n' * exp2 e)
+          | inv (*assoc (n * exp2 e' + n' * exp2 e) k (exp2 (f + f')))
+          | *assoc k' (n * exp2 e' + n' * exp2 e) (k * exp2 (f + f'))
+          | *comm k' (n * exp2 e' + n' * exp2 e)
+          | inv (*assoc (n * exp2 e' + n' * exp2 e) k' (k * exp2 (f + f')))
+          | exp2plus f f'
+          | *assoc k (exp2 f) (exp2 f')
+          | inv w
+          | *comm (exp2 e) (exp2 f')
+          | *assoc k' (exp2 f') (exp2 e)
+          | inv x
+          | inv (exp2plus e' e)
+          | +comm e' e
+          = refl
 
         lemma : (num$ (mkd n e) * exp2 (pow$ (mkd n' e')) +
           num$ (mkd n' e') * exp2 (pow$ (mkd n e))) * exp2 (e + e') ≡
           (n * exp2 e' + n' * exp2 e) * exp2 (pow$ (mkd n e) + pow$ (mkd n' e'))
         lemma = *inj k _ _ α1 (*inj k' _ _ α1'
           (lemma2 k k' n e n' e' _ (pow$ (mkd n e)) _ (pow$ (mkd n' e')) α2 α2' α3 α3'))
-        -- Escribir y demostrar la versión más general posible
 
-mult-mk : ∀ n e n' e' → mult (mkd n e) (mkd n' e') ≡ mkd (n * n') (e + e')
+mult-mk : ∀ n e n' e' → (_*d_) (mkd n e) (mkd n' e') ≡ mkd (n * n') (e + e')
 mult-mk n e n' e' with (mk-const n e) | (mk-const n' e')
 mult-mk n e n' e' | k , (α1 , (α2 , α3)) | k' , (α1' , (α2' , α3')) rewrite
   mult-numden (mkd n e) (mkd n' e')
@@ -256,19 +290,34 @@ mult-mk n e n' e' | k , (α1 , (α2 , α3)) | k' , (α1' , (α2' , α3')) rewrit
             → exp2 e' ≡ k' * exp2 (pow$ (mkd n' e'))
             → k' * (k * (num$ (mkd n e) * num$ (mkd n' e') * exp2 (e + e'))) ≡
               k' * (k * (n * n' * exp2 (pow$ (mkd n e) + pow$ (mkd n' e'))))
-      lemma u1 u2 u3 u4 = ADMITTED
-
--- rewrite
---   add-numden (mkd n e) (mkd n' e')
---   = dmk≡
---       (num$ (mkd n e) * exp2 (pow$ (mkd n' e')) +
---          num$ (mkd n' e') * exp2 (pow$ (mkd n e)))
---       (pow$ (mkd n e) + pow$ (mkd n' e'))
---       (n * exp2 e' + n' * exp2 e)
---       (e + e')
---       {!!}
-    
-add-comm : ∀ a b → add a b ≡ add b a
+      lemma u1 u2 u3 u4
+        rewrite
+        *assoc k (num$ (mkd n e) * num$ (mkd n' e')) (exp2 (e + e'))
+        | *assoc k (num$ (mkd n e)) (num$ (mkd n' e'))
+        | inv u1
+        | *comm n (num$ (mkd n' e'))
+        | inv (*assoc (num$ (mkd n' e')) n (exp2 (e + e')))
+        | *assoc k' (num$ (mkd n' e')) (n * exp2 (e + e'))
+        | inv u2
+        | *assoc k (n * n') (exp2 (pow$ (mkd n e) + pow$ (mkd n' e')))
+        | *comm k (n * n')
+        | inv (*assoc (n * n') k (exp2 (pow$ (mkd n e) + pow$ (mkd n' e'))))
+        | *assoc k' (n * n') (k * exp2 (pow$ (mkd n e) + pow$ (mkd n' e')))
+        | *comm k' (n * n')
+        | inv (*assoc (n * n') k' (k * exp2 (pow$ (mkd n e) + pow$ (mkd n' e'))))
+        | exp2plus (pow$ (mkd n e)) (pow$ (mkd n' e'))
+        | *assoc k (exp2 (pow$ (mkd n e))) (exp2 (pow$ (mkd n' e')))
+        | inv u3
+        | *assoc k' (exp2 e) (exp2 (pow$ (mkd n' e')))
+        | *comm k' (exp2 e)
+        | inv (*assoc (exp2 e) k' (exp2 (pow$ (mkd n' e'))))
+        | inv u4
+        | exp2plus e e'
+        | *assoc n' n (exp2 e * exp2 e')
+        | *comm n' n
+        = refl
+        
+add-comm : ∀ a b → (_+d_) a b ≡ b +d a
 add-comm (dyadic n e x) (dyadic n₁ e₁ x₁) = d≡ (cross≡ _ (e + e₁) _ (e₁ + e) lemma)
   where
     lemma : (n * exp2 e₁ + n₁ * exp2 e) * exp2 (e₁ + e) ≡ (n₁ * exp2 e + n * exp2 e₁) * exp2 (e + e₁)
@@ -277,7 +326,7 @@ add-comm (dyadic n e x) (dyadic n₁ e₁ x₁) = d≡ (cross≡ _ (e + e₁) _ 
       | +comm (n₁ * exp2 e) (n * exp2 e₁)
       = refl
 
-mult-comm : ∀ a b → mult a b ≡ mult b a
+mult-comm : ∀ a b → (_*d_) a b ≡ (_*d_) b a
 mult-comm (dyadic n e x) (dyadic n₁ e₁ x₁) = d≡ (cross≡ (n * n₁) (e + e₁) (n₁ * n) (e₁ + e) lemma)
   where
     lemma : n * n₁ * exp2 (e₁ + e) ≡ n₁ * n * exp2 (e + e₁)
@@ -286,19 +335,19 @@ mult-comm (dyadic n e x) (dyadic n₁ e₁ x₁) = d≡ (cross≡ (n * n₁) (e 
       | +comm e e₁
       = refl
 
-add-zero : ∀ a → add zer a ≡ a
+add-zero : ∀ a → (_+d_) zer a ≡ a
 add-zero (dyadic n e x) rewrite mkd-norm n e x | *runit n = d≡ refl
 
-addhalfhalf : add half half ≡ oned
+addhalfhalf : (_+d_) half half ≡ oned
 addhalfhalf = d≡ refl
 
-mult-zero : ∀ a → mult zer a ≡ zer
+mult-zero : ∀ a → (_*d_) zer a ≡ zer
 mult-zero (dyadic n e x) = d≡ (cross≡ zero e zero zero refl)
 
-mult-one : ∀ a → mult oned a ≡ a
+mult-one : ∀ a → (_*d_) oned a ≡ a
 mult-one (dyadic n e x) rewrite +rzero n = inv (mkd-norm n e x)
 
-add-assoc : ∀ a b c → add a (add b c) ≡ add (add a b) c
+add-assoc : ∀ a b c → (_+d_) a ((_+d_) b c) ≡ (_+d_) ((_+d_) a b) c
 add-assoc (dyadic n e x) (dyadic n' e' _) (dyadic n'' e'' x'')
   rewrite
     mkd-norm n e x
@@ -312,9 +361,34 @@ add-assoc (dyadic n e x) (dyadic n' e' _) (dyadic n'' e'' x'')
      where
          lemma : (n * exp2 (e' + e'') + (n' * exp2 e'' + n'' * exp2 e') * exp2 e) * exp2 (e + e' + e'')
                   ≡ ((n * exp2 e' + n' * exp2 e) * exp2 e'' + n'' * exp2 (e + e')) * exp2 (e + (e' + e''))
-         lemma = ADMITTED
+         lemma rewrite
+           +assoc e e' e''
+           | *comm (n' * exp2 e'' + n'' * exp2 e') (exp2 e)
+           | *distr (exp2 e) (n' * exp2 e'') (n'' * exp2 e')
+           | *comm (n * exp2 e' + n' * exp2 e)  (exp2 e'')
+           | *distr (exp2 e'') (n * exp2 e') (n' * exp2 e)
+           | exp2plus e' e''
+           | *assoc (exp2 e'') n (exp2 e')
+           | *comm (exp2 e'') n
+           | *assoc n (exp2 e') (exp2 e'')
+           | *assoc (exp2 e'') n' (exp2 e)
+           | *comm (exp2 e'') n'
+           | *assoc (exp2 e) n'' (exp2 e')
+           | *assoc (exp2 e) n' (exp2 e'')
+           | *comm (exp2 e) n'
+           | exp2plus e e'
+           | *assoc n'' (exp2 e) (exp2 e')
+           | *comm n'' (exp2 e)
+           | inv (*assoc n (exp2 e'') (exp2 e'))
+           | *comm (exp2 e'') (exp2 e')
+           | *assoc n (exp2 e') (exp2 e'')
+           | +assoc (n * exp2 e' * exp2 e'') (n' * exp2 e * exp2 e'') (exp2 e * n'' * exp2 e')
+           | inv (*assoc n' (exp2 e) (exp2 e''))
+           | *comm (exp2 e) (exp2 e'')
+           | *assoc n' (exp2 e'') (exp2 e)
+           = refl
 
-mult-assoc : ∀ a b c → mult a (mult b c) ≡ mult (mult a b) c
+mult-assoc : ∀ a b c → (_*d_) a ((_*d_) b c) ≡ (_*d_) ((_*d_) a b) c
 mult-assoc (dyadic n e x) (dyadic n₁ e₁ x₁) (dyadic n₂ e₂ x₂)
   rewrite
     mkd-norm n e x
@@ -330,7 +404,7 @@ mult-assoc (dyadic n e x) (dyadic n₁ e₁ x₁) (dyadic n₂ e₂ x₂)
         = refl
 
 
-mp-distr : ∀ a b c → mult a (add b c) ≡ add (mult a b) (mult a c)
+mp-distr : ∀ a b c → (_*d_) a ((_+d_) b c) ≡ (_+d_) ((_*d_) a b) ((_*d_) a c)
 mp-distr (dyadic n e x) (dyadic n₁ e₁ x₁) (dyadic n₂ e₂ x₂)
   rewrite
   mkd-norm n e x
@@ -345,8 +419,27 @@ mp-distr (dyadic n e x) (dyadic n₁ e₁ x₁) (dyadic n₂ e₂ x₂)
       lemma :
         n * (n₁ * exp2 e₂ + n₂ * exp2 e₁) * exp2 (e + e₁ + (e + e₂)) ≡
         (n * n₁ * exp2 (e + e₂) + n * n₂ * exp2 (e + e₁)) * exp2 (e + (e₁ + e₂))
-      lemma = ADMITTED
-
+      lemma rewrite
+        inv (+assoc e e₁ (e + e₂))
+        | exp2plus e (e₁ + (e + e₂))
+        | *distr n (n₁ * exp2 e₂) (n₂ * exp2 e₁)
+        | *assoc (n * (n₁ * exp2 e₂) + n * (n₂ * exp2 e₁)) (exp2 e) (exp2 (e₁ + (e + e₂)))
+        | *comm (n * (n₁ * exp2 e₂) + n * (n₂ * exp2 e₁)) (exp2 e)
+        | *distr (exp2 e) (n * (n₁ * exp2 e₂)) (n * (n₂ * exp2 e₁))
+        | *assoc n n₁ (exp2 e₂)
+        | *assoc n n₂ (exp2 e₁)
+        | *assoc (exp2 e) (n * n₁) (exp2 e₂)
+        | *assoc (exp2 e) (n * n₂) (exp2 e₁)
+        | *comm (exp2 e) (n * n₁)
+        | *comm (exp2 e) (n * n₂)
+        | inv (*assoc (n * n₁) (exp2 e) (exp2 e₂))
+        | inv (*assoc (n * n₂) (exp2 e) (exp2 e₁))        
+        | inv (exp2plus e e₂)
+        | inv (exp2plus e e₁)
+        | +assoc e₁ e e₂
+        | +comm e₁ e
+        | +assoc e e₁ e₂
+        = refl
 
 -- Decidable equality
 dec≡ : (a b : D) → (a ≡ b) ⊎ ¬ (a ≡ b)
@@ -371,63 +464,30 @@ lt' a b = n * (exp2 e') < n' * (exp2 e)
     n' = num$ b
     e' = pow$ b
 
-lt : D → D → Bool
-lt (dyadic n e x) (dyadic n' e' x') = n * (exp2 e') < n' * (exp2 e)
+_<d_ : D → D → Bool
+_<d_ (dyadic n e x) (dyadic n' e' x') = n * (exp2 e') < n' * (exp2 e)
 
-lt$ : ∀ a b → lt a b ≡ (num$ a) * (exp2 (pow$ b)) < (num$ b) * (exp2 (pow$ a))
+lt$ : ∀ a b → a <d b ≡ (num$ a) * (exp2 (pow$ b)) < (num$ b) * (exp2 (pow$ a))
 lt$ (dyadic n e x) (dyadic n₁ e₁ x₁) = refl
 
-lthalf : lt zer half ≡ true
+lthalf : zer <d half ≡ true
 lthalf = refl
 
-ltzero : (a : D) → lt zer a ≡ false → a ≡ zer
+ltzero : (a : D) → zer <d a ≡ false → a ≡ zer
 ltzero (dyadic n e x) p rewrite *runit n | <zero n p = d≡ refl
 
-ltone : lt zer oned ≡ true
+ltone : zer <d oned ≡ true
 ltone = refl
 
-ltmk : (n e n' e' : ℕ) → lt (mkd n e) (mkd n' e') ≡ n * exp2 e' < n' * exp2 e
-ltmk n e n' e' with mk-const n e | mk-const n' e'
-ltmk n e n' e' | k , (α , (β , γ)) | k' , (α' , (β' , γ')) rewrite
-  lt$ (mkd n e) (mkd n' e')
-  | inv (<mult-inj
-    (num$ (mkd n e) * exp2 (pow$ (mkd n' e')))
-    (num$ (mkd n' e') * exp2 (pow$ (mkd n e)))
-    k α)
-  | *assoc k (num$ (mkd n e)) (exp2 (pow$ (mkd n' e')))
-  | inv β
-  | *assoc k (num$ (mkd n' e')) (exp2 (pow$ (mkd n e)))
-  | *comm k (num$ (mkd n' e'))
-  | inv (*assoc (num$ (mkd n' e')) k (exp2 (pow$ (mkd n e))))
-  | inv γ
-  | inv (<mult-inj (n * exp2 (pow$ (mkd n' e'))) (num$ (mkd n' e') * exp2 e) k' α')
-  | *assoc k' n (exp2 (pow$ (mkd n' e')))
-  | *comm k' n
-  | inv (*assoc n k' (exp2 (pow$ (mkd n' e'))))
-  | inv γ'
-  | *assoc k' (num$ (mkd n' e')) (exp2 e)
-  | inv β'
-  = refl
+ltzeroref : (a : D) → ¬ (a <d zer ≡ true)
+ltzeroref (dyadic n e x) = λ y → true≢false (inv y)
 
-ltplus : (a b c : D) → lt (add a b) (add a c) ≡ lt b c
-ltplus (dyadic n e x) (dyadic n₁ e₁ x₁) (dyadic n₂ e₂ x₂) rewrite
-  ltmk (n * exp2 e₁ + n₁ * exp2 e) (e + e₁) (n * exp2 e₂ + n₂ * exp2 e) (e + e₂)
-  = ADMITTED
+mustbezero : (a : D) → zer <d a ≡ false → a ≡ zer
+mustbezero (dyadic n e x) p rewrite *runit n | zero<false n p = lemma e x
+  where
+    lemma : ∀ e x → dyadic 0 e x ≡ dyadic 0 0 refl
+    lemma e x rewrite mkd-norm 0 e x | mkdzero e = refl
 
-ltmult : (a b c : D) → lt zer a ≡ true → lt (mult a b) (mult a c) ≡ lt b c
-ltmult (dyadic n e x) (dyadic n₁ e₁ x₁) (dyadic n₂ e₂ x₂) p rewrite
-  *runit n
-  | ltmk (n * n₁) (e + e₁) (n * n₂) (e + e₂)
-  = ADMITTED
-
-dpositivity : (a b : D) → lt zer a ≡ true → lt zer (add a b) ≡ true
-dpositivity (dyadic n e x) (dyadic n₁ e₁ x₁) p = ADMITTED
-
-
-ltevd : (a b : D) → lt a b ≡ true → Σ D (λ c → (add a c ≡ b) × (lt zer c ≡ true))
-ltevd (dyadic n zero x) (dyadic n₁ zero x₁) p with <evd n n₁ ADMITTED
-ltevd (dyadic n zero x) (dyadic n₁ zero x₁) p | k , (α , β) rewrite
-  *runit k
-  = dyadic k 0 (iszero-normalized k zero refl) , (ADMITTED , ADMITTED)
-ltevd (dyadic n zero x) (dyadic n₁ (succ e₁) x₁) p = ADMITTED
-ltevd (dyadic n (succ e) x) (dyadic n₁ e₁ x₁) p = ADMITTED
+infixl 30 _+d_
+infixl 35 _*d_
+infix 6 _<d_

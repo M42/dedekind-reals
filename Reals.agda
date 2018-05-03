@@ -7,352 +7,32 @@ open import Booleans
 open import Equality
 open import Prop
 open import Naturals using (ℕ)
+open import Dyadics-Properties
 
 
-open import Dyadics renaming
-  ( D to F
-  ; zer to zero
-  ; oned to one
-  ; add to add-dyadic
-  ; mult to mult-dyadic
-  ; add-comm to +comm
-  ; add-zero to +zero
-  ; addhalfhalf to +half
-  ; mult-comm to *comm
-  ; mult-zero to *zero
-  ; mult-one to *one
-  ; lthalf to <half
-  ; ltzero to <zero
-  ; ltone to <one
-  ; dec≡ to dec-eq
-  ; add-assoc to +assoc
-  ; ltplus to <plus'
-  ; ltmult to <mult
-  ; dpositivity to <positivity
-  ; ltevd to <evd
-  ; mult-assoc to *assoc
-  ; mp-distr to *distr)
-
-
-_+_ : F → F → F
-_+_ = add-dyadic
-
-_*_ : F → F → F
-_*_ = mult-dyadic
-
-_<_ : F → F → Bool
-_<_ = lt
-
-infixl 30 _+_
-infixl 35 _*_
-infix 6 _<_
-
-<plus : (a b c : F) → (a + c) < (b + c) ≡ a < b
-<plus a b c rewrite +comm a c | +comm b c = <plus' c a b
-
-postulate
-  -- Ordered field
-  <sqbetween : (a b : F) → a < b ≡ true → Σ F (λ c → (a < c * c ≡ true) × (c * c < b ≡ true))
-
-+nonzero : (a b : F)
-  → zero < a ≡ true
-  → zero < b ≡ true
-  → zero < a + b ≡ true
-+nonzero a b p q = ADMITTED
-  
-
-<trans : (a b c : F) → a < b ≡ true → b < c ≡ true → a < c ≡ true
-<trans a b c p q with (<evd a b p) | (<evd b c q)
-<trans a b c p q | d , (refl , β) | e , (refl , β2) rewrite
-  (inv (+assoc a d e))
-  | inv (+zero a)
-  | inv (+assoc zero a (d + e))
-  | +zero (a + (d + e))
-  | +comm a (d + e)
-  | <plus zero (d + e) a
-  = +nonzero d e β β2
-
-min : F → F → F
-min a b with (a < b)
-min a b | true = a
-min a b | false = b
-
-min-bound : (a b c : F)
-  → a < b ≡ true
-  → a < c ≡ true
-  --------------
-  → a < min b c ≡ true
-min-bound a b c p q with (b < c)??
-min-bound a b c p q | inl x rewrite x = p
-min-bound a b c p q | inr x rewrite x = q
-
-min-def1 : (a b c : F)
-  → a < c ≡ true
-  → min a b < c ≡ true
-min-def1 a b c p with (a < b)??
-min-def1 a b c p | inl x rewrite x = p
-min-def1 a b c p | inr x rewrite x = ADMITTED
-
-min-def2 : (a b c : F)
-  → b < c ≡ true
-  → min a b < c ≡ true
-min-def2 a b c p with (a < b)??
-min-def2 a b c p | inl x rewrite x = <trans a b c x p
-min-def2 a b c p | inr x rewrite x = p
-
-min-or : (P : F → Set) → (a b : F) → P a → P b → P (min a b)
-min-or P a b pa pb with (a < b)??
-min-or P a b pa pb | inl x rewrite x = pa
-min-or P a b pa pb | inr x rewrite x = pb
-
-<halfone : half < one ≡ true
-<halfone rewrite
-  inv (+zero half)
-  | inv +half
-  | <plus zero half half
-  | <half
-  = refl
- 
-
-<halfpos : ∀ f
-  → zero < f ≡ true
-  -------------------------
-  → zero < half * f ≡ true
-<halfpos f p rewrite
-  (inv (*zero half))
-  | *comm zero half
-  | <mult half zero f <half
-  | *comm half zero
-  | *zero half
-  | p
-  = refl
-
-<halfless : ∀ f
-  → zero < f ≡ true
-  -----------------------
-  → half * f < f ≡ true
-<halfless f p rewrite
-  inv (<mult half zero f <half)
-  | *comm half zero
-  | *zero half
-  | inv (<plus zero (half * f) (half * f))
-  | *comm half f
-  | inv (*distr f half half)
-  | +half
-  | *comm f one
-  | *one f
-  | +zero (f * half)
-  | p
-  = refl
-
-<plusone : ∀ f → f < one + f ≡ true
-<plusone f rewrite
-  inv (+zero f)
-  | +assoc one zero f
-  | <plus zero (one + zero) f
-  | +comm one zero
-  | +zero one
-  | <one
-  = refl
-
-<pluscomp : ∀ a b c d
-  → a < c ≡ true
-  → b < d ≡ true
-  → a + b < c + d ≡ true
-<pluscomp a b c d p q = <trans (a + b) (c + b) (c + d) lemma1 lemma2
-  where
-    lemma1 : a + b < c + b ≡ true
-    lemma1 rewrite <plus a c b | p = refl
-    lemma2 : c + b < c + d ≡ true
-    lemma2 rewrite +comm c b | +comm c d | <plus b d c | q = refl
-
-
-<plus+zero : ∀ a b → a < a + b ≡ zero < b
-<plus+zero a b rewrite
-  inv (+zero a)
-  | inv (+assoc zero a b)
-  | +comm a b
-  | +assoc zero b a
-  | <plus zero (zero + b) a
-  | +zero b
-  = refl
-
-halfsplit : (a : F) → a ≡ half * a + half * a
-halfsplit a = inv (*one a) · lemma
-  where
-    lemma : one * a ≡ half * a + half * a
-    lemma rewrite
-      inv +half
-      | *comm (half + half) a
-      | *distr a half half
-      | *comm half a
-      = refl
-
-mean : F → F → F
-mean a b = half * (a + b)
-
-<mean-max : (a b : F) → a < b ≡ a < mean a b
-<mean-max a b = lemma · ap (λ u → u < mean a b) (inv (halfsplit a))
-  where
-    lemma : a < b ≡ half * a + half * a < mean a b
-    lemma rewrite
-      *distr half a b
-      | +comm (half * a) (half * b)
-      | <plus (half * a) (half * b) (half * a)
-      | <mult half a b <half
-      = refl
-
-<mean-max' : (a b : F) → a < b ≡ true → a < mean a b ≡ true
-<mean-max' a b p rewrite <mean-max a b | p = refl
-
-<mean-min : (a b : F) → a < b ≡ mean a b < b
-<mean-min a b = lemma · ap (λ u → mean a b < u) (inv (halfsplit b))
-  where
-    lemma : a < b ≡ mean a b < half * b + half * b
-    lemma rewrite
-      *distr half a b
-      | <plus (half * a) (half * b) (half * b)
-      | <mult half a b <half
-      = refl
-
-<mean-min' : (a b : F) → a < b ≡ true → mean a b < b ≡ true
-<mean-min' a b p rewrite <mean-min a b | p = refl
-
-<mean-max-true : (a b : F) → a < b ≡ true → a < mean a b ≡ true
-<mean-max-true a b p rewrite inv p | inv (<mean-max a b) = refl
-
-<mean-min-true : (a b : F) → a < b ≡ true → mean a b < b ≡ true
-<mean-min-true a b p rewrite inv p | inv (<mean-min a b) = refl
-
-<sqless : ∀ a b
-  → a * a < b * b ≡ true
-  -----------------------
-  → a     < b     ≡ true
-<sqless a b p with (a < b)??
-<sqless a b p | inl x = x
-<sqless a b p | inr x with (a * b < b * b)??
-<sqless a b p | inr x | inr y = ADMITTED
-<sqless a b p | inr x | inl y = ADMITTED
--- Usando que (a < b) es decidible
-
-<*zero : (b : F) → b * zero < b ≡ true → zero < b ≡ true
-<*zero b q rewrite *comm b zero | (*zero b) = q
-
-<sqcrec : ∀ a b
-  → a < b ≡ true
-  → a * a < b * b ≡ true
-<sqcrec a b p with (zero < a)??
-<sqcrec a b p | inl x with (zero < b)??
-<sqcrec a b p | inl x | inl y = <trans (a * a) (b * a) (b * b) ADMITTED ADMITTED
-<sqcrec a b p | inl x | inr y = ADMITTED
-<sqcrec a b p | inr x rewrite
-  <zero a x
-  | *zero zero
-  | inv (*zero b)
-  | *comm zero b
-  | <mult b zero b (<*zero b p)
-  | *comm b zero
-  | *zero b
-  | p
-  = refl
-
-
-
-F-lemma1 : (x y d f r : F)
-  → r + d ≡ f
-  → x + y ≡ r
-  ------------------------------------
-  → x + half * d + (y + half * d) ≡ f
-F-lemma1 x y d f r p q rewrite
-  +assoc (x + (half * d)) y (half * d)
-  | inv (+assoc x (half * d) y)
-  | +comm (half * d) y
-  | +assoc x y (half * d)
-  | q
-  | inv (+assoc r (half * d) (half * d))
-  | *comm half d
-  | inv (*distr d half half)
-  | +half
-  | *comm d one
-  | *one d
-  | p
-  = refl
-
-F-lemma2 : (x y : F) → zero < y ≡ true → x < x + y ≡ true
-F-lemma2 x y p rewrite
-  inv (+zero x)
-  | +comm zero x
-  | inv (+assoc x zero y)
-  | <plus x zero y
-  | +comm x zero
-  | +comm x (zero + y)
-  | +zero y
-  | <plus zero y x
-  | p
-  = refl
-
-F-lemma3 : (g : F) → g < (one + g) * (one + g) ≡ true
-F-lemma3 g rewrite
-  *distr (one + g) one g
-  | *comm (one + g) one
-  | *one (one + g)
-  | +comm one g
-  | inv (+assoc g one ((g + one) * g))
-  | <plus+zero g (one + (g + one) * g)
-  | <positivity one ((g + one) * g) <one
-  = refl
-
-F-lemma4 : (u f r : F)
-  → u < r * r ≡ true
-  → r < f     ≡ true
-  → u < f * f ≡ true
-F-lemma4 u f r p q = <trans u (r * r) (f * f) p (<sqcrec r f q)
-
-F-lemma5 : (y' z' y z f : F)
-  → y' < y ≡ true
-  → z' < z ≡ true
-  → y * z ≡ f
-  → y' * z' < f ≡ true
-F-lemma5 y' z' y z .(y * z) α β refl with (zero < y')??
-F-lemma5 y' z' y z .(y * z) α β refl | inl x = <trans (y' * z') (y' * z) (y * z) ADMITTED ADMITTED
-F-lemma5 y' z' y z .(y * z) α β refl | inr x = ADMITTED -- <trans (y' * z') (y * z') (y * z) sublemma1 sublemma2
-  where
-    sublemma1 : y' * z' < y * z' ≡ true
-    sublemma1 = ADMITTED
-
-    sublemma2 : y * z' < y * z ≡ true
-    sublemma2 = ADMITTED
-
-
-F-lemma6 : (a g g' : F)
-  → a < g * g ≡ true
-  → a < g' * g' ≡ true
-  → a < g * g' ≡ true
-F-lemma6 = ADMITTED
-
-F-lemma7 : (a b c : F)
-  → a * b < c ≡ true
-  → Σ F (λ s → (zero < s ≡ true) × ((a + s) * b ≡ c))
-F-lemma7 a b c p = ADMITTED
-
-F-lemma8 : (a b : F) → min a b * min a b < a * b ≡ true
-F-lemma8 a b = ADMITTED
-
---------------------------------------------------------
---------------------------------------------------------
---- REALS ----------------------------------------------
---------------------------------------------------------
---------------------------------------------------------
+-- The following is a construction of the positive real numbers using
+-- Dedekind cuts. A cut is a propositional predicate over the rational
+-- numbers that determines which rationals are greater or equal than the
+-- real number. A real number must be
+--   * bounded, meaning that the cut must be inhabited;
+--   * rounded, meaning that the cut must be "open".
 record ℝ⁺ : Set where
   constructor real
   field
     -- Dedekind cut
     cut : F → Set
     isprop : (f : F) → isProp (cut f)
+
     bound : ∃ f ∈ F , cut f
     round1 : (f : F) → cut f → ∃ r ∈ F , ((r < f ≡ true) × cut r)
     round2 : (f : F) → (∃ r ∈ F , ((r < f ≡ true) × cut r)) → cut f
 open ℝ⁺ {{...}} public
+
+
+-- Two propositions are equal if they follow from each other.  This
+-- notion of equality is necessary for two similar reals to be equal.
+postulate
+  prop-univ : {A B : Set} → isProp A → isProp B → (A → B) → (B → A) → A ≡ B
 
 real-eq' : (a b : ℝ⁺) → ((f : F) → cut {{a}} f ≡ cut {{b}} f) → a ≡ b
 real-eq' (real cuta ispropa bounda round1a round2a) (real cutb ispropb boundb round1b round2b) α with funext α
@@ -370,8 +50,6 @@ real-eq' (real cuta ispropa bounda round1a round2a) (real .cuta ispropb boundb r
 real-eq' (real cuta ispropa bounda round1a round2a) (real .cuta .ispropa boundb round1b round2b) α
   | refl | refl | refl | refl | refl = refl
 
-postulate prop-univ : {A B : Set} → isProp A → isProp B → (A → B) → (B → A) → A ≡ B
-
 real-eq : (a b : ℝ⁺)
   → ((f : F) → (cut {{a}} f → cut {{b}} f))
   → ((f : F) → (cut {{b}} f → cut {{a}} f))
@@ -381,6 +59,9 @@ real-eq a b α β = real-eq' a b lemma
     lemma : (f : F) → (cut {{a}} f ≡ cut {{b}} f)
     lemma f = prop-univ (isprop {{a}} f) (isprop {{b}} f) (α f) (β f)
 
+
+-- Examples of real numbers. Zero is a real number. Each rational
+-- determines a real number.
 r0 : ℝ⁺
 r0 = record
   { cut = λ x → zero < x ≡ true
@@ -400,6 +81,9 @@ rat q = record
   }
 
 
+-- Addition is an operation on real numbers. Addition is
+-- commutative. This is an example on how theorems on the real numbers
+-- could be proved.
 infixl 30 _+ᵣ_
 _+ᵣ_ : ℝ⁺ → ℝ⁺ → ℝ⁺
 a +ᵣ b = record
@@ -430,7 +114,6 @@ a +ᵣ b = record
       }}}}
   }
   
-
 r+comm : (a b : ℝ⁺) → (a +ᵣ b) ≡ (b +ᵣ a)
 r+comm a b = real-eq (a +ᵣ b) (b +ᵣ a) (lemma a b) (lemma b a)
   where
@@ -444,6 +127,8 @@ r+comm a b = real-eq (a +ᵣ b) (b +ᵣ a) (lemma a b) (lemma b a)
         sublemma : (x y f : F) → x + y ≡ f → y + x ≡ f
         sublemma x y f p rewrite +comm x y | p = refl
 
+
+-- Every positive real has a square root.
 sqrt : ℝ⁺ → ℝ⁺
 sqrt a = record
   { cut = λ f → ∃ g ∈ F , (cut {{a}} g × (g < f * f ≡ true))
@@ -465,86 +150,17 @@ sqrt a = record
   }
 
 
-_*ᵣ_ : ℝ⁺ → ℝ⁺ → ℝ⁺
-a *ᵣ b = record
-  { cut = λ x → ∃ y ∈ F , (∃ z ∈ F , ((cut {{a}} y × cut {{b}} z) × (y * z ≡ x)))
-  ; isprop = λ f → Ex-isProp
-  ; bound =
-     Ex-elim (bound {{a}}) Ex-isProp λ { (x , α) → 
-     Ex-elim (bound {{b}}) Ex-isProp λ { (y , β) →
-     x * y ,, (x ,, (y ,, ((α , β) , refl)))     
-     }}
-  ; round1 = λ f x →
-     Ex-elim x Ex-isProp λ { (y , u1) →
-     Ex-elim u1 Ex-isProp λ { (z , ((αy , αz) , β )) →
-     Ex-elim (round1 {{a}} y αy) Ex-isProp λ { (y' , (γ , αy')) →
-     Ex-elim (round1 {{b}} z αz) Ex-isProp λ { (z' , (δ , αz')) →
-     y' * z' ,, (F-lemma5 y' z' y z f γ δ β , (y' ,, (z' ,, ((αy' , αz') , refl)))) 
-     }}}}
-  ; round2 = λ f x →
-     Ex-elim x Ex-isProp λ { (r , (α , x2)) →
-     Ex-elim x2 Ex-isProp λ { (y , x3) →
-     Ex-elim x3 Ex-isProp λ { (z , ((β1 , β2) , refl)) →
-     Σ-elim (F-lemma7 y z f α) λ { (s , (ω , κ)) →
-     y + s ,, (z ,, (((round2 {{a}} (y + s) (y ,, (((<plus+zero y s) · ω) , β1))) , β2) , κ))
-     }}}}
-  }
-
-
-sqrt*linv : ∀ a → sqrt a *ᵣ sqrt a ≡ a
-sqrt*linv a = real-eq (sqrt a *ᵣ sqrt a) a lemma lemma2
-  where
-    lemma : (f : F) → ℝ⁺.cut (sqrt a *ᵣ sqrt a) f → ℝ⁺.cut a f
-    lemma f m =
-      Ex-elim m (isprop {{a}} f) λ { (g , h) →
-      Ex-elim h (isprop {{a}} f) λ { (g' , ((cg , cg') , refl)) →
-      Ex-elim cg (isprop {{a}} f) λ { (j , (α , β)) →
-      Ex-elim cg' (isprop {{a}} f) λ { (j' , (α' , β')) →
-      round2 {{a}} f (min j' j ,,
-        (F-lemma6 (min j' j) g g' (min-def2 j' j (g * g) β) ((min-def1 j' j (g' * g') β'))
-        , min-or (cut {{a}}) j' j α' α)
-        )
-      }}}}
-
-    lemma2 : (f : F) → ℝ⁺.cut a f → ℝ⁺.cut (sqrt a *ᵣ sqrt a) f
-    lemma2 f m =
-      Ex-elim (round1 {{a}} f m) Ex-isProp λ { (r , (h , n)) →
-      Σ-elim (<sqbetween r f h) λ { (c , (α , β)) →
-      round2 {{sqrt a *ᵣ sqrt a}} f (c * c ,,
-      (β , (c ,, (c ,, (((r ,, (n , α)) , (r ,, (n , α))) , refl
-      )))))}}
-
-sqrt*rinv : ∀ a → sqrt (a *ᵣ a) ≡ a
-sqrt*rinv a = real-eq (sqrt (a *ᵣ a)) a lemma lemma2
-  where
-    lemma : (f : F) → ℝ⁺.cut (sqrt (a *ᵣ a)) f → ℝ⁺.cut a f
-    lemma f m =
-      Ex-elim m (isprop {{a}} f) λ { (g , (α1 , β)) →
-      Ex-elim α1 (isprop {{a}} f) λ { (y , α2) →
-      Ex-elim α2 (isprop {{a}} f) λ { (z , ((γ1 , γ2) , refl)) →
-      round2 {{a}} f (min y z ,,
-        ( <sqless (min y z) f (<trans (min y z * min y z) (y * z) (f * f) (F-lemma8 y z) β)
-        , min-or ((cut {{a}})) y z γ1 γ2)
-        ) 
-      }}}
-      
-    lemma2 : (f : F) → ℝ⁺.cut a f → ℝ⁺.cut (sqrt (a *ᵣ a)) f
-    lemma2 f m =
-      Ex-elim (round1 {{a}} f m) Ex-isProp λ { (r , (α , β)) →
-      r * r ,,
-      ( (r ,, (r ,, ((β , β) , refl)))
-      , <sqcrec r f α
-      )}
+cutnonzero : (a : ℝ⁺) → (f : F) → ℝ⁺.cut a f → zero < f ≡ true
+cutnonzero a f p = Ex-elim (round1 {{a}} f p) uip λ { (r , (β , _)) → cantbezero r f β }
 
 
 
------------------
--- LOCATORS
------------------
-
+-- A number is located if we can decide whether a rational number is
+-- greater or equal than it. This can be used to compute decimal
+-- digits of the number. In this example, we provide a locator for
+-- sqrt(2) and we use it to compute some of its digits.
 Locator : (r : ℝ⁺) → Set
 Locator r = (q : F) → (cut {{r}} q) ⊎ ¬ (cut {{r}} q)
-
 
 loc-rational : (f : F) → Locator (rat f)
 loc-rational f q with (f < q)??
@@ -556,11 +172,10 @@ locate r loc q with loc q
 locate r loc q | inl x = true
 locate r loc q | inr x = false
 
-
 loc-sqrt2 : Locator (sqrt (rat (one + one)))
 loc-sqrt2 q with (one + one < q * q)??
 loc-sqrt2 q | inl x = inl (mean (one + one) (q * q) ,,
-  (<mean-max' (one + one) (mult-dyadic q q) x , <mean-min' (dyadic 2 0 refl) (q * q) x)
+  (<mean-max' (one + one) (q * q) x , <mean-min' two (q * q) x)
   )
 loc-sqrt2 q | inr x = inr λ α →
   Ex-elim α (λ _ → λ ()) λ { (f , (u , v)) →
@@ -575,10 +190,7 @@ loc-sqrt2 q | inr x = inr λ α →
       → ⊥
     lemma a b c p q r rewrite (<trans a b c p q) = true≢false r
 
-
-
-
--- Example
+-- Example setup.
 sqrt2 : ℝ⁺
 sqrt2 = sqrt (rat (one + one))
 
@@ -604,6 +216,7 @@ digits r loc (ℕ.succ n) base ε | true = O ∷ digits r loc n base (half * ε)
 digits r loc (ℕ.succ n) base ε | false = I ∷ digits r loc n (base + ε) (half * ε)
 
 
+-- Compilation through Haskell.
 -- agda --compile Reals.agda --ghc-flag=-dynamic && ./Reals
 open import Agda.Builtin.IO
 
